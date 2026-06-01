@@ -2206,6 +2206,8 @@ class cifParser:
         
         # find the portion of the file that contains the seqres
         SEQRES_string = ""
+        MODRES_string = ""
+        local_modres = {}
         SEQRES_string_found = False
         in_fasta = False
         fas_pos = 0
@@ -2239,8 +2241,8 @@ class cifParser:
                 
                 # we reached the atoms
                 break
-                
-            if re.match(r'^_entity_poly.entity_id', line):
+
+            if re.match(r'^_entity_poly.', line):
 
                 while line != "":
 
@@ -2253,7 +2255,7 @@ class cifParser:
                     if '#' in line:
 
                         # end of _entity_poly.entity_id
-                        SEQRES_string_found = True
+                        #SEQRES_string_found = True
                         break
 
                     elif in_fasta:
@@ -2266,11 +2268,24 @@ class cifParser:
                         SEQRES_string += line
 
                     line = CIF.readline()
+                    
+            if re.match(r'^_pdbx_struct_mod_residue.', line):
+                
+                while line != "":
+                    
+                    if '#' in line:
+                        
+                        break
+                    
+                    MODRES_string += line
+                    line = CIF.readline()
 
+
+            """
             if SEQRES_string_found:
 
                 break
-
+            """
             line = CIF.readline()
 
         if re.match(r'^_entity_poly.entity_id\s+1', SEQRES_string):
@@ -2308,7 +2323,64 @@ class cifParser:
                     if chain == query_chain:
 
                         self.SEQRES = words[4]
+                        
+        if MODRES_string != "":
+            
+            i = 0
+            res_column = 0
+            pos_column = 0
+            mod_column = 0
+            chain_column = 0
+            modres_lines = MODRES_string.split('\n')
+            for modres_line in modres_lines:
+                
+                if not "_pdbx_struct_mod_residue." in modres_line:
                     
+                    words = modres_line.split()
+                    num_columns = len(words)
+                    if num_columns > res_column and num_columns > pos_column  and num_columns > mod_column:
+                        
+                        res = words[res_column]
+                        pos = int(words[pos_column])
+                        mod = words[mod_column]
+                        chain = words[chain_column] 
+                        if not chain in local_modres:
+                            
+                            local_modres[chain] = {}
+                            
+                        local_modres[chain][pos] = [res, mod]
+    
+                elif "_pdbx_struct_mod_residue.auth_comp_id" in modres_line:
+                    
+                    res_column = i
+                    
+                elif res_column == 0 and "_pdbx_struct_mod_residue.label_comp_id" in modres_line:
+                    
+                    res_column = i
+                    
+                elif "_pdbx_struct_mod_residue.auth_seq_id" in modres_line:
+                    
+                    pos_column = i
+                    
+                elif pos_column == 0 and "_pdbx_struct_mod_residue.label_seq_id" in modres_line:
+                    
+                    pos_column = i
+                    
+                elif "_pdbx_struct_mod_residue.auth_asym_id" in modres_line:
+                    
+                    chain_column = i
+                    
+                elif chain_column == 0 and "_pdbx_struct_mod_residue.label_asym_id" in modres_line:
+                    
+                    chain_column = i
+                    
+                elif "_pdbx_struct_mod_residue.parent_comp_id" in modres_line:
+                    
+                    mod_column = i
+                    
+                i += 1
+                
+        #LOG.write("\n%s\n" %(str(local_modres)))         
         number_of_columns = 0
         # we find which columns has what value
         auth_seq_id_column = 0
@@ -2429,7 +2501,11 @@ class cifParser:
                 hetatm_withoutX = ""
                     
                 # convert residue to one letter
-                if res in conversion_table:
+                if chain in local_modres and pos in local_modres[chain] and res == local_modres[chain][pos][0] and local_modres[chain][pos][1] in conversion_table:
+                    
+                    oneLetter = conversion_table[local_modres[chain][pos][1]]
+                    
+                elif res in conversion_table:
                     
                     oneLetter = conversion_table[res]
                     
@@ -2527,7 +2603,11 @@ class cifParser:
 
                     
                 # convert residue to one letter
-                if res in conversion_table:
+                if chain in local_modres and pos in local_modres[chain] and res == local_modres[chain][pos][0] and local_modres[chain][pos][1] in conversion_table:
+                    
+                    oneLetter = conversion_table[local_modres[chain][pos][1]]
+                    
+                elif res in conversion_table:
                     
                     oneLetter = conversion_table[res]
                     
@@ -2644,6 +2724,12 @@ class cifParser:
     def get_positions(self):
         
         return self.positions
+
+
+
+
+
+
 
 
 
