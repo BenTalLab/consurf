@@ -2932,8 +2932,6 @@ def check_validity_tree_file(nodes):
 """
 
 
-
-    
 def get_query_seq_in_MSA():
     
     # returns the query sequence with gaps as it's in the MSA
@@ -2950,23 +2948,24 @@ def get_query_seq_in_MSA():
     line = FASTA.readline()
     while line != "":
         
-        first_word = line.split()[0]
+        line = line.strip()
         if found:
             
-            if first_word[0] == '>':
+            if line[0] == '>':
                 
                 break
             
             else:
                 
-                seq += first_word
+                seq += line
                 
-        elif first_word == ">"  + vars['msa_SEQNAME']:
+        elif line == ">"  + vars['msa_SEQNAME']:
                 
                 found = True
             
         line = FASTA.readline()   
         
+    #LOG.write("\n>%s\n%s\n" %(vars['msa_SEQNAME'], seq))
     FASTA.close()
     return seq
     
