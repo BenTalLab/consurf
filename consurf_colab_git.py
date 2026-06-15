@@ -2195,7 +2195,11 @@ class cifParser:
         self.auth_comp_id_column = 0
         self.auth_asym_id_column = 0
         self.B_iso_or_equiv = 0
-
+        self.pdbx_PDB_ins_code_column = 0
+        self.found_auth_seq_id_column = False
+        self.found_auth_comp_id_column = False
+        self.found_auth_asym_id_column = False
+        self.found_pdbx_PDB_ins_code_column = False
 
     #def read(self, file, query_chain, DNA_AA, atom_position_filename):
     def read(self, file, query_chain, DNA_AA):
@@ -2208,12 +2212,11 @@ class cifParser:
         SEQRES_string = ""
         MODRES_string = ""
         local_modres = {}
-        SEQRES_string_found = False
+        #SEQRES_string_found = False
         in_fasta = False
         fas_pos = 0
         last_pos = 0
         current_chain = ""
-        hetatm = "" # the part of the sequence that in the HETATM lines
         hetatm_withoutX = "" # X is not added to fill the breaks in the sequence
         hetatm_pos = {} # the positions of the residues in the HETATM
         hetatm_max_res_details = 0 # maximum length of the details of the residues in the HETATM
@@ -2328,7 +2331,6 @@ class cifParser:
             
             i = 0
             res_column = 0
-            pos_column = 0
             mod_column = 0
             chain_column = 0
             modres_lines = MODRES_string.split('\n')
@@ -2338,18 +2340,21 @@ class cifParser:
                     
                     words = modres_line.split()
                     num_columns = len(words)
-                    if num_columns > res_column and num_columns > pos_column  and num_columns > mod_column:
+                    if num_columns > res_column and num_columns > mod_column:
                         
                         res = words[res_column]
-                        pos = int(words[pos_column])
                         mod = words[mod_column]
                         chain = words[chain_column] 
-                        if not chain in local_modres:
+                        if chain == query_chain:
                             
-                            local_modres[chain] = {}
-                            
-                        local_modres[chain][pos] = [res, mod]
-    
+                            if res in local_modres:
+                                
+                                local_modres[res] = ""
+                                
+                            else:
+                                
+                                local_modres[res] = mod
+                                
                 elif "_pdbx_struct_mod_residue.auth_comp_id" in modres_line:
                     
                     res_column = i
@@ -2357,14 +2362,6 @@ class cifParser:
                 elif res_column == 0 and "_pdbx_struct_mod_residue.label_comp_id" in modres_line:
                     
                     res_column = i
-                    
-                elif "_pdbx_struct_mod_residue.auth_seq_id" in modres_line:
-                    
-                    pos_column = i
-                    
-                elif pos_column == 0 and "_pdbx_struct_mod_residue.label_seq_id" in modres_line:
-                    
-                    pos_column = i
                     
                 elif "_pdbx_struct_mod_residue.auth_asym_id" in modres_line:
                     
@@ -2390,6 +2387,7 @@ class cifParser:
         label_comp_id_column = 0
         label_asym_id_column = 0
         B_iso_or_equiv = 0
+        pdbx_PDB_ins_code_column = 0
         found_auth_seq_id_column = False
         found_auth_comp_id_column = False
         found_auth_asym_id_column = False
@@ -2397,9 +2395,14 @@ class cifParser:
         found_label_comp_id_column = False
         found_label_asym_id_column = False
         found_B_iso_or_equiv = False
+        found_pdbx_PDB_ins_code_column = False
         while line != "":
 
             line = line.strip()
+            
+            if line == "_atom_site.pdbx_PDB_ins_code":
+                
+                found_pdbx_PDB_ins_code_column = True
 
             if line == "_atom_site.B_iso_or_equiv":
 
@@ -2433,6 +2436,10 @@ class cifParser:
 
                 # we identified the necessary columns
                 break
+            
+            if found_pdbx_PDB_ins_code_column:
+                
+                pdbx_PDB_ins_code_column -= 1
 
             if found_B_iso_or_equiv:
 
@@ -2485,7 +2492,14 @@ class cifParser:
                 number_of_columns = len(words)
 
                 # extract atom data
-                pos = int(words[auth_seq_id_column])
+                pos = words[auth_seq_id_column]
+                if found_pdbx_PDB_ins_code_column:
+                    
+                    insert =  words[pdbx_PDB_ins_code_column]
+                    if insert != "." and insert != "?":
+                        
+                        pos = pos + "_" + insert
+                        
                 res = words[auth_comp_id_column]
                 chain = words[auth_asym_id_column]
 
@@ -2559,7 +2573,7 @@ class cifParser:
                 
                 fas_pos += 1
                 
-                res_details = "%s:%d:%s" %(res, pos, chain)
+                res_details = "%s:%s:%s" %(res, pos, chain)
                 self.positions[fas_pos] = res_details
                 if len(res_details) > self.max_res_details:
                     
@@ -2597,7 +2611,14 @@ class cifParser:
                 
 
                 # extract atom data
-                pos = int(words[auth_seq_id_column])
+                pos = words[auth_seq_id_column]
+                if found_pdbx_PDB_ins_code_column:
+                    
+                    insert =  words[pdbx_PDB_ins_code_column]
+                    if insert != "." and insert != "?":
+                        
+                        pos = pos + "_" + insert
+                    
                 res = words[auth_comp_id_column]
                 chain = words[auth_asym_id_column]
 
@@ -2641,7 +2662,7 @@ class cifParser:
                 # writing atom position file
                 fas_pos += 1
                 
-                res_details = "%s:%d:%s" %(res, pos, chain)
+                res_details = "%s:%s:%s" %(res, pos, chain)
                 hetatm_pos[fas_pos] = res_details
                 if len(res_details) > hetatm_max_res_details:
                     
@@ -2680,10 +2701,16 @@ class cifParser:
         CIF.close()
         #CORR.close()
         
+        self.found_auth_seq_id_column = found_auth_seq_id_column
+        self.found_auth_comp_id_column = found_auth_comp_id_column
+        self.found_auth_asym_id_column = found_auth_asym_id_column
+        self.found_pdbx_PDB_ins_code_column = found_pdbx_PDB_ins_code_column
+        
         self.auth_seq_id_column = number_of_columns + auth_seq_id_column
         self.auth_comp_id_column = number_of_columns + auth_comp_id_column
         self.auth_asym_id_column = number_of_columns + auth_asym_id_column
         self.B_iso_or_equiv = number_of_columns + B_iso_or_equiv
+        self.pdbx_PDB_ins_code_column = number_of_columns + pdbx_PDB_ins_code_column
         LOG.write("residue number column - %s\nresidue name column - %s\nchain id column - %s\nb-factor column - %s\n" %(self.auth_seq_id_column + 1, self.auth_comp_id_column + 1, self.auth_asym_id_column + 1, self.B_iso_or_equiv + 1))
         
         return 1
@@ -2695,7 +2722,7 @@ class cifParser:
 
     def get_columns(self):
         
-        return self.auth_seq_id_column, self.auth_comp_id_column, self.auth_asym_id_column, self.B_iso_or_equiv
+        return self.auth_seq_id_column, self.auth_comp_id_column, self.auth_asym_id_column, self.B_iso_or_equiv, self.pdbx_PDB_ins_code_column, self.found_pdbx_PDB_ins_code_column
 
     def get_type(self):
 
@@ -2725,14 +2752,9 @@ class cifParser:
         
         return self.positions
 
+    def auth_found(self):
 
-
-
-
-
-
-
-
+        return self.found_auth_seq_id_column, self.found_auth_comp_id_column, self.found_auth_asym_id_column
 
 
     
@@ -3466,7 +3488,6 @@ def read_ConSurf_gradesPE(gradesPE_file, gradesPE_hash_ref, gradesPE_ISD_hash_re
     return(insufficient)
 
 
-
 def replace_TmpFactor_Consurf_Scores_CIF(atom_grades, query_chain, pdb_file, prefix):
 
     # Creates The ATOM section with ConSurf grades instead of the TempFactor column, creates PDB file with ConSurf grades
@@ -3475,7 +3496,7 @@ def replace_TmpFactor_Consurf_Scores_CIF(atom_grades, query_chain, pdb_file, pre
     pdb_with_grades_isd = prefix + "_ATOMS_section_With_ConSurf_isd.cif"
     pdb_with_scores = prefix + "_With_Conservation_Scores.cif"
 	
-    [auth_seq_id_column, auth_comp_id_column, auth_asym_id_column, B_iso_or_equiv] = vars['pdb_object'].get_columns()
+    [auth_seq_id_column, auth_comp_id_column, auth_asym_id_column, B_iso_or_equiv, pdbx_PDB_ins_code_column, found_pdbx_PDB_ins_code_column] = vars['pdb_object'].get_columns()
 
     try:
 
@@ -3519,6 +3540,12 @@ def replace_TmpFactor_Consurf_Scores_CIF(atom_grades, query_chain, pdb_file, pre
             words = line.split()
             chain = words[auth_asym_id_column]
             residue_number = words[auth_seq_id_column]
+            if found_pdbx_PDB_ins_code_column:
+                
+                insert = words[pdbx_PDB_ins_code_column]
+                if insert != '.' and insert != '?':
+                    
+                    residue_number = residue_number + "_" + insert
 
             grade = "0"
             score = "0"
@@ -3575,17 +3602,19 @@ def replace_TmpFactor_Consurf_Scores_CIF(atom_grades, query_chain, pdb_file, pre
 
     GRADES.close()
     SCORES.close()	
-    vars['zip_list'].append(pdb_with_grades)
-    vars['zip_list'].append(pdb_with_scores)
+	
     if vars['insufficient_data']:
         
-        show_py3dmol(pdb_with_grades_isd, "cif")
-        print_instructions(pdb_with_grades, "CIF", pdb_with_grades_isd)
+        GRADES_ISD.close()
+		
+        create_chimera(pdb_with_grades_isd, prefix)
+        create_pymol(pdb_with_grades_isd, prefix)
     
     else:
         
-        show_py3dmol(pdb_with_grades, "cif")
-        print_instructions(pdb_with_grades, "CIF")
+        create_chimera(pdb_with_grades, prefix)
+        create_pymol(pdb_with_grades, prefix)
+
 
 def add_remark():
     
