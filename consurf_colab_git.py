@@ -2515,9 +2515,9 @@ class cifParser:
                 hetatm_withoutX = ""
                     
                 # convert residue to one letter
-                if chain in local_modres and pos in local_modres[chain] and res == local_modres[chain][pos][0] and local_modres[chain][pos][1] in conversion_table:
+                if chain in local_modres and res in local_modres[chain] and local_modres[chain][res] in conversion_table:
                     
-                    oneLetter = conversion_table[local_modres[chain][pos][1]]
+                    oneLetter = conversion_table[local_modres[chain][res]]
                     
                 elif res in conversion_table:
                     
@@ -2624,9 +2624,9 @@ class cifParser:
 
                     
                 # convert residue to one letter
-                if chain in local_modres and pos in local_modres[chain] and res == local_modres[chain][pos][0] and local_modres[chain][pos][1] in conversion_table:
+                if chain in local_modres and res in local_modres[chain] and local_modres[chain][res] in conversion_table:
                     
-                    oneLetter = conversion_table[local_modres[chain][pos][1]]
+                    oneLetter = conversion_table[local_modres[chain][res]]
                     
                 elif res in conversion_table:
                     
