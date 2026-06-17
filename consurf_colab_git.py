@@ -32,6 +32,13 @@ LOG = None
 
 def install():
 
+    # apt-get update
+    if not os.path.isfile("APT_GET_READY"):
+        
+        print("Updating apt-get.")
+        os.system("apt-get update")
+        os.system("touch APT_GET_READY")
+        
     # get fonts
     if not os.path.isfile("FONTS_READY"):
 
