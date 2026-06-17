@@ -7156,7 +7156,7 @@ def cluster_homologoues(ref_cd_hit_hash):
 
 def submit_job_to_Q(job_name_prefix, cmd):
 
-    os.system("cd %s\n%s >> submit_log.txt 2>&1" %(vars['working_dir'], cmd))
+    os.system("cd %s\n%s" %(vars['working_dir'], cmd))
     os.system("dmesg | tail -40")
 
     
