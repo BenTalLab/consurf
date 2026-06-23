@@ -3607,16 +3607,18 @@ def replace_TmpFactor_Consurf_Scores_CIF(atom_grades, query_chain, pdb_file, pre
 
         line = PDB.readline()
 
-    vars['zip_list'].append(pdb_with_grades)
-    vars['zip_list'].append(pdb_with_scores)
-
     GRADES.close()
     SCORES.close()	
+    
+    vars['zip_list'].append(pdb_with_grades)
+    vars['zip_list'].append(pdb_with_scores)
 	
     if vars['insufficient_data']:
         
         GRADES_ISD.close()
 		
+        vars['zip_list'].append(pdb_with_grades_isd)
+        
         show_py3dmol(pdb_with_grades_isd, "cif")
         print_instructions(pdb_with_grades, "CIF", pdb_with_grades_isd)
     
