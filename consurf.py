@@ -3607,6 +3607,9 @@ def replace_TmpFactor_Consurf_Scores_CIF(atom_grades, query_chain, pdb_file, pre
 
         line = PDB.readline()
 
+    vars['zip_list'].append(pdb_with_grades)
+    vars['zip_list'].append(pdb_with_scores)
+
     GRADES.close()
     SCORES.close()	
 	
@@ -3614,13 +3617,13 @@ def replace_TmpFactor_Consurf_Scores_CIF(atom_grades, query_chain, pdb_file, pre
         
         GRADES_ISD.close()
 		
-        create_chimera(pdb_with_grades_isd, prefix)
-        create_pymol(pdb_with_grades_isd, prefix)
+        show_py3dmol(pdb_with_grades_isd, "cif")
+        print_instructions(pdb_with_grades, "CIF", pdb_with_grades_isd)
     
     else:
         
-        create_chimera(pdb_with_grades, prefix)
-        create_pymol(pdb_with_grades, prefix)
+        show_py3dmol(pdb_with_grades, "cif")
+        print_instructions(pdb_with_grades, "CIF")
 
 
 def add_remark():
