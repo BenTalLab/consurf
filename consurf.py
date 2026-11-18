@@ -100,15 +100,16 @@ def install():
         print("Installing rate4site.")
 
         # create directory for rate4site
-        os.system("git clone https://github.com/barakav/r4s_for_collab.git")
+        os.system("git clone https://github.com/BenTalLab/rate4site_colab.git")
 
         # create directory for rate4site slow
-        shutil.copytree(vars['rate4site_dir'], vars['rate4site_slow_dir'])
+        #shutil.copytree(vars['rate4site_dir'], vars['rate4site_slow_dir'])
 
         # make rate4site
         try:
 
             os.chdir(vars['rate4site_dir'])
+            os.system("./configure")
             os.system("make")
             os.chdir(vars['root_dir'])
 
@@ -6748,16 +6749,12 @@ def install_rate4site(rate4site_dir, rate4site_slow_dir):
 
 def run_rate4site():
 
-    rate4site_dir = "/content/r4s_for_collab/" 
-    rate4site_slow_dir = "/content/r4s_for_collab_slow/"
     vars['r4s_log'] = "r4s.log" # log file
     vars['r4s_out'] = "r4s.res" # output file
 
-    #install_rate4site(rate4site_dir, rate4site_slow_dir)
-
     MatrixHash = {'JTT' : '-Mj', 'MTREV' : '-Mr', 'CPREV' : '-Mc', 'WAG' : '-Mw', 'DAYHOFF' : '-Md', 'T92' : '-Mt', 'HKY' : '-Mh', 'GTR' : '-Mg', 'JC_NUC' : '-Mn', 'JC_AA' : '-Ma', 'LG' : '-Ml'}
 
-    params = "rate4site -a '%s' -s %s -zn %s -bn -o %s -v 9" %(vars['query_string'], vars['msa_fasta'], MatrixHash[(form['SUB_MATRIX']).upper()], vars['r4s_out'])
+    params = " -a '%s' -s %s -zn %s -bn -o %s -v 9" %(vars['query_string'], vars['msa_fasta'], MatrixHash[(form['SUB_MATRIX']).upper()], vars['r4s_out'])
     if vars['running_mode'] == "_mode_pdb_msa_tree" or vars['running_mode'] == "_mode_msa_tree":
 
         params += " -t %s" %vars['tree_file']
@@ -6770,7 +6767,7 @@ def run_rate4site():
 
         params +=  " -im"
 
-    r4s_comm = rate4site_dir + params + " -l " + vars['r4s_log']
+    r4s_comm = vars['rate4site_dir'] + "rate4site" + params + " -l " + vars['r4s_log']
 
     LOG.write("run_rate4site : running command: %s\n" %r4s_comm)
     print("The conservation scores are being calculated. Please wait.")
@@ -6782,7 +6779,7 @@ def run_rate4site():
         LOG.write("run_rate4site : The run of rate4site failed. Sending warning message to output.\nThe same run will be done using the SLOW version of rate4site.\n")
         #print("Warning: The given MSA is very large, therefore it will take longer for ConSurf calculation to finish. The results will be sent to the e-mail address provided.<br>The calculation continues nevertheless.")
         vars['r4s_log'] = "r4s_slow.log"
-        r4s_comm = rate4site_slow_dir + params + " -l " + vars['r4s_log']
+        r4s_comm = vars['rate4site_dir'] + "rate4site_doublerep" + params + " -l " + vars['r4s_log']
         LOG.write("run_rate4site : running command: %s\n" %str(r4s_comm))
         submit_job_to_Q("rate4siteSlow", r4s_comm)
 
@@ -7336,8 +7333,8 @@ def run_consurf(root_dir, git_dir, job_name, mode, substitution_model, rate4site
     # directories for programs installed
     vars['prottest'] = vars['root_dir'] + "/prottest-3.4.2/prottest-3.4.2.jar"
     vars['cd_hit_dir'] = vars['root_dir'] + "/cdhit/"
-    vars['rate4site_dir'] = vars['root_dir'] + "/r4s_for_collab/"
-    vars['rate4site_slow_dir'] = vars['root_dir'] + "/r4s_for_collab_slow/"
+    vars['rate4site_dir'] = vars['root_dir'] + "/rate4site_colab/src/rate4site/"
+    #vars['rate4site_slow_dir'] = vars['root_dir'] + "/r4s_for_collab_slow/"
 
     vars['pymol'] = "pymol.py"
     vars['pymol_CBS'] = "pymol_CBS.py"
