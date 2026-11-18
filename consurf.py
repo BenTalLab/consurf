@@ -119,6 +119,7 @@ def install():
             os.chdir(vars['root_dir'])
             raise("Installing rate4site failed.")
 
+        """
         # change the make file and make rate4site slow
         try:
 
@@ -133,7 +134,7 @@ def install():
             print(e)
             os.chdir(vars['root_dir'])
             raise("Installing rate4site failed.")
-
+        """
         os.system("touch RATE4SITE_READY")
 
 
